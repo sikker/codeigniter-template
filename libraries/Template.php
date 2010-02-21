@@ -53,7 +53,7 @@ class Template {
 
 	private $CI;
 	
-	private $data = array();
+	private $data;
 
 	/**
 	 * Constructor - Calls the CI instance and sets a debug message
@@ -130,8 +130,17 @@ class Template {
 		// Let CI do the caching instead of the browser
 		$this->CI->output->cache( $this->cache_lifetime );
 		
-		// Test to see if this file
-		$this->_body = $this->_load_view( $view );
+		// Only try to load a view if one is specified
+		if($view === '')
+		{
+			// Set to empty and discreetly notify the developer
+			log_message('debug', 'no body view specified on template build, assuming layout');
+			$this->_body = '';
+		}
+		else
+		{
+			$this->_body = $this->_load_view( $view );
+		}
 		
 		// Want this file wrapped with a layout file?
 		if( $this->_layout )
@@ -148,7 +157,7 @@ class Template {
 			{
 				// If directory is set, use it
 				$this->data->theme_view_folder = '../themes/'.$this->_theme.'/views/';
-						$layout_view = $this->data->theme_view_folder.$this->_layout;
+				$layout_view = $this->data->theme_view_folder.$this->_layout;
 			}
 	
 			// Otherwise use whatever is given
@@ -157,8 +166,8 @@ class Template {
 				$layout_view = $this->_layout;
 			}
 		
-			// Parse if parser is enabled, or its a theme view
-			if($this->_parser_enabled === TRUE || $this->_theme)
+			// Parse if parser is enabled
+			if($this->_parser_enabled === TRUE)
 			{
 				$this->_body = $this->CI->parser->parse( $layout_view, $this->data, TRUE );
 			}
@@ -333,7 +342,7 @@ class Template {
 	 */
 	public function return_partial( $view, $data = array(), $search = TRUE )
 	{
-		$this->data = array_merge($this->data, $data);
+		$this->data = (object) array_merge((array) $this->data, (array) $data);
 		return $this->_load_view( $view, $search );
 	}
 
