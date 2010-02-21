@@ -165,7 +165,13 @@ class Template {
 			{
 				$layout_view = $this->_layout;
 			}
-		
+	
+			// Make template_foo_bar just as viable as template['foo']['bar'] in views
+			// in order to support the basic CI parser. Will work in normal views too
+			// for consistency.
+			$collapsed_data = $this->_array_collapse((array) $this->data);
+			$this->data = array_merge((array) $this->data, $collapsed_data);
+
 			// Parse if parser is enabled
 			if($this->_parser_enabled === TRUE)
 			{
@@ -456,6 +462,35 @@ class Template {
 		}
 	}
 
+
+	private function _array_collapse($array, $seperator = '_', $current_key = FALSE)
+	{
+		static $new_array = array();
+
+		// if this is the first run we need to define the array
+		if(!isset($new_array))
+		{	
+			$new_array = array();
+		}
+	
+		// if this is the final iteration of this subarray,
+		// assign the value instead of continuing iteration
+		if( ! is_array($array) && ! is_object($array))
+		{
+			$new_array[$current_key] = $array;
+		}
+		else
+		{
+			//otherwise iterate on with appended keys
+			foreach($array as $key => $row)
+			{
+				$new_key = ($current_key ? $current_key . $seperator . $key : $key);
+				$this->_array_collapse($row, $seperator, $new_key);
+			}
+		}
+
+		return $new_array;
+	}
 
 	private function _guess_title()
 	{
